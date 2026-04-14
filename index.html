@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Три в ряд — Pill Match</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #171b2f;
+      --panel2: #202744;
+      --text: #ecf1ff;
+      --muted: #97a3c6;
+      --accent: #7cf0c8;
+      --danger: #ff7b8b;
+      --cell: min(10.6vw, 62px);
+      --gap: 8px;
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top, #1b2140 0%, #0f1220 55%, #0b0d16 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .game {
+      width: min(96vw, 720px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+
+    .topbar {
+      padding: 16px 16px 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.3px;
+    }
+
+    .title .sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      min-width: 110px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px;
+      padding: 10px 12px;
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .chip .label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+
+    .chip .value {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+    }
+
+    .actions {
+      padding: 0 16px 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      background: linear-gradient(180deg, #7cf0c8, #4bd1aa);
+      color: #062116;
+      font-weight: 800;
+      padding: 12px 16px;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(75, 209, 170, 0.24);
+      transition: transform .08s ease, filter .2s ease;
+    }
+    button:active { transform: translateY(1px) scale(0.99); }
+    button.secondary {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      box-shadow: none;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .message {
+      color: var(--muted);
+      font-size: 14px;
+      padding: 0 16px 16px;
+      min-height: 22px;
+    }
+
+    .board-wrap {
+      padding: 0 16px 16px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, var(--cell));
+      gap: var(--gap);
+      justify-content: center;
+      padding: 16px;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 22px;
+    }
+
+    .cell {
+      width: var(--cell);
+      height: var(--cell);
+      position: relative;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden;
+      cursor: pointer;
+      padding: 0;
+      outline: none;
+    }
+
+    .pill {
+      position: absolute;
+      inset: 4px;
+      border-radius: calc(var(--radius) - 4px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.24),
+        inset 0 -8px 16px rgba(0,0,0,0.18),
+        0 6px 12px rgba(0,0,0,0.18);
+      transform: translateZ(0);
+      transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+    }
+
+    .pill::before,
+    .pill::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 50%;
+    }
+    .pill::before { left: 0; border-top-left-radius: inherit; border-bottom-left-radius: inherit; }
+    .pill::after { right: 0; border-top-right-radius: inherit; border-bottom-right-radius: inherit; }
+
+    .cell.selected {
+      border-color: rgba(124,240,200,0.9);
+      box-shadow: 0 0 0 2px rgba(124,240,200,0.25) inset;
+    }
+
+    .cell.selected .pill {
+      transform: scale(0.96);
+      filter: brightness(1.08);
+    }
+
+    .cell.swapping .pill { transform: scale(1.08); }
+    .cell.matched {
+      animation: pop .18s ease-in forwards;
+    }
+
+    @keyframes pop {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(0.4); opacity: 0; }
+    }
+
+    .game-over {
+      color: #ffd1d7;
+      font-weight: 700;
+    }
+
+    @media (max-width: 520px) {
+      :root { --gap: 6px; --radius: 16px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .stats { width: 100%; justify-content: flex-start; }
+      .chip { min-width: 92px; }
+      .title h1 { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="game">
+      <div class="topbar">
+        <div class="title">
+          <h1>Три в ряд — Pill Match</h1>
+          <div class="sub">Меняй соседние плитки местами и собирай линии из 3 и больше.</div>
+        </div>
+        <div class="stats">
+          <div class="chip"><span class="label">Очки</span><span class="value" id="score">0</span></div>
+          <div class="chip"><span class="label">Ходы</span><span class="value" id="moves">0</span></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="newGame">Новая игра</button>
+        <button class="secondary" id="hintBtn">Проверить ходы</button>
+      </div>
+
+      <div class="message" id="message">Выбери одну плитку, потом соседнюю.</div>
+
+      <div class="board-wrap">
+        <div id="board" class="board" aria-label="Игровое поле"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const SIZE = 8;
+      const COLORS = [
+        ["#ff6b6b", "#ffd166"],
+        ["#4dabf7", "#74c0fc"],
+        ["#69db7c", "#b2f2bb"],
+        ["#b197fc", "#d0bfff"],
+        ["#ff922b", "#ffd8a8"],
+        ["#f06595", "#faa2c1"]
+      ];
+
+      const boardEl = document.getElementById("board");
+      const scoreEl = document.getElementById("score");
+      const movesEl = document.getElementById("moves");
+      const messageEl = document.getElementById("message");
+      const newGameBtn = document.getElementById("newGame");
+      const hintBtn = document.getElementById("hintBtn");
+
+      let board = [];
+      let score = 0;
+      let moves = 0;
+      let selected = null;
+      let busy = false;
+      let cells = [];
+
+      const rand = (n) => Math.floor(Math.random() * n);
+      const key = (r, c) => `${r},${c}`;
+      const inBounds = (r, c) => r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+      const isAdjacent = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+
+      function randomTile() {
+        return { type: rand(COLORS.length) };
+      }
+
+      function createBoard() {
+        board = Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, randomTile));
+        score = 0;
+        moves = 0;
+        selected = null;
+        updateStats();
+        removeInitialMatches();
+        renderBoard();
+        clearAllMatches();
+        if (!hasAnyMove()) {
+          createBoard();
+        }
+        setMessage("Выбери одну плитку, потом соседнюю.");
+      }
+
+      function removeInitialMatches() {
+        let safety = 0;
+        while (findMatches().size && safety < 50) {
+          const matches = findMatches();
+          for (const pos of matches) {
+            const [r, c] = pos.split(",").map(Number);
+            board[r][c] = randomTile();
+          }
+          safety++;
+        }
+      }
+
+      function buildCells() {
+        boardEl.innerHTML = "";
+        cells = [];
+        for (let r = 0; r < SIZE; r++) {
+          const row = [];
+          for (let c = 0; c < SIZE; c++) {
+            const cell = document.createElement("button");
+            cell.className = "cell";
+            cell.type = "button";
+            cell.dataset.r = r;
+            cell.dataset.c = c;
+            cell.setAttribute("aria-label", `Ячейка ${r + 1}, ${c + 1}`);
+            cell.addEventListener("click", onCellClick);
+            boardEl.appendChild(cell);
+            row.push(cell);
+          }
+          cells.push(row);
+        }
+      }
+
+      function renderBoard() {
+        if (!cells.length) buildCells();
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            const cell = cells[r][c];
+            cell.classList.toggle("selected", selected && selected.r === r && selected.c === c);
+            cell.classList.remove("matched", "swapping");
+            const tile = board[r][c];
+            cell.innerHTML = "";
+            const pill = document.createElement("div");
+            pill.className = "pill";
+            const [left, right] = COLORS[tile.type];
+            pill.style.background = `linear-gradient(90deg, ${left} 0 50%, ${right} 50% 100%)`;
+            pill.style.border = "1px solid rgba(255,255,255,0.16)";
+            cell.appendChild(pill);
+          }
+        }
+      }
+
+      function onCellClick(e) {
+        if (busy) return;
+        const r = Number(e.currentTarget.dataset.r);
+        const c = Number(e.currentTarget.dataset.c);
+        const pos = { r, c };
+
+        if (!selected) {
+          selected = pos;
+          renderBoard();
+          return;
+        }
+
+        if (selected.r === r && selected.c === c) {
+          selected = null;
+          renderBoard();
+          return;
+        }
+
+        if (isAdjacent(selected, pos)) {
+          attemptSwap(selected, pos);
+        } else {
+          selected = pos;
+          renderBoard();
+        }
+      }
+
+      async function attemptSwap(a, b) {
+        busy = true;
+        swap(a, b);
+        moves++;
+        updateStats();
+        renderBoard();
+        await wait(120);
+
+        const matches = findMatches();
+        if (matches.size) {
+          setMessage("Есть совпадение. Убираю линии...");
+          await resolveMatches();
+          if (!hasAnyMove()) {
+            endGame();
+          } else {
+            setMessage("Ход сделан. Ищи следующую линию.");
+          }
+        } else {
+          swap(a, b);
+          setMessage("Нет линии — ход не засчитан.");
+          renderBoard();
+          await wait(120);
+          moves--;
+          updateStats();
+        }
+
+        selected = null;
+        renderBoard();
+        busy = false;
+      }
+
+      function swap(a, b) {
+        const tmp = board[a.r][a.c];
+        board[a.r][a.c] = board[b.r][b.c];
+        board[b.r][b.c] = tmp;
+      }
+
+      function findMatches() {
+        const matched = new Set();
+
+        // Horizontal
+        for (let r = 0; r < SIZE; r++) {
+          let runType = board[r][0].type;
+          let runStart = 0;
+          for (let c = 1; c <= SIZE; c++) {
+            const type = c < SIZE ? board[r][c].type : null;
+            if (type !== runType) {
+              const len = c - runStart;
+              if (runType !== null && len >= 3) {
+                for (let x = runStart; x < c; x++) matched.add(key(r, x));
+              }
+              runType = type;
+              runStart = c;
+            }
+          }
+        }
+
+        // Vertical
+        for (let c = 0; c < SIZE; c++) {
+          let runType = board[0][c].type;
+          let runStart = 0;
+          for (let r = 1; r <= SIZE; r++) {
+            const type = r < SIZE ? board[r][c].type : null;
+            if (type !== runType) {
+              const len = r - runStart;
+              if (runType !== null && len >= 3) {
+                for (let y = runStart; y < r; y++) matched.add(key(y, c));
+              }
+              runType = type;
+              runStart = r;
+            }
+          }
+        }
+
+        return matched;
+      }
+
+      function clearMatches(matchSet) {
+        for (const pos of matchSet) {
+          const [r, c] = pos.split(",").map(Number);
+          board[r][c] = null;
+        }
+      }
+
+      function collapseBoard() {
+        for (let c = 0; c < SIZE; c++) {
+          const stack = [];
+          for (let r = SIZE - 1; r >= 0; r--) {
+            if (board[r][c]) stack.push(board[r][c]);
+          }
+          for (let r = SIZE - 1; r >= 0; r--) {
+            board[r][c] = stack.length ? stack.shift() : randomTile();
+          }
+        }
+      }
+
+      function clearAllMatches() {
+        let guard = 0;
+        while (true && guard < 50) {
+          const matches = findMatches();
+          if (!matches.size) break;
+          clearMatches(matches);
+          collapseBoard();
+          guard++;
+        }
+      }
+
+      async function resolveMatches() {
+        let totalRemoved = 0;
+        let chain = 0;
+
+        while (true) {
+          const matches = findMatches();
+          if (!matches.size) break;
+          chain++;
+          totalRemoved += matches.size;
+          score += matches.size * 10 * chain;
+          updateStats();
+          markMatched(matches);
+          await wait(180);
+          clearMatches(matches);
+          collapseBoard();
+          renderBoard();
+          await wait(120);
+        }
+
+        if (totalRemoved) {
+          setMessage(`Удалено плиток: ${totalRemoved}.`);
+        }
+      }
+
+      function markMatched(matchSet) {
+        for (const pos of matchSet) {
+          const [r, c] = pos.split(",").map(Number);
+          cells[r][c].classList.add("matched");
+        }
+      }
+
+      function hasAnyMove() {
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            const here = { r, c };
+            const neighbors = [
+              { r: r + 1, c },
+              { r, c: c + 1 }
+            ].filter(p => inBounds(p.r, p.c));
+            for (const n of neighbors) {
+              swap(here, n);
+              const ok = findMatches().size > 0;
+              swap(here, n);
+              if (ok) return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function updateStats() {
+        scoreEl.textContent = score;
+        movesEl.textContent = moves;
+      }
+
+      function setMessage(text, isOver = false) {
+        messageEl.textContent = text;
+        messageEl.classList.toggle("game-over", isOver);
+      }
+
+      function endGame() {
+        setMessage("Ходов больше нет. Игра окончена. Нажми «Новая игра».", true);
+      }
+
+      function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      newGameBtn.addEventListener("click", () => {
+        createBoard();
+      });
+
+      hintBtn.addEventListener("click", () => {
+        setMessage(hasAnyMove() ? "Ещё есть доступные ходы." : "Ходов больше нет.", !hasAnyMove());
+      });
+
+      buildCells();
+      createBoard();
+    })();
+  </script>
+</body>
+</html>
