@@ -1,34 +1,38 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Три в ряд — Pill Match</title>
+  <title>Half-Step Match</title>
   <style>
     :root {
-      --bg: #0f1220;
-      --panel: #171b2f;
-      --panel2: #202744;
-      --text: #ecf1ff;
-      --muted: #97a3c6;
-      --accent: #7cf0c8;
-      --danger: #ff7b8b;
-      --cell: min(10.6vw, 62px);
+      --bg1: #0d1020;
+      --bg2: #161b36;
+      --bg3: #090b14;
+      --panel: rgba(255, 255, 255, 0.06);
+      --panel-border: rgba(255, 255, 255, 0.10);
+      --text: #eef3ff;
+      --muted: #a2aed0;
+      --good: #7cf0c8;
+      --bad: #ff7f93;
+      --cell: min(10vw, 66px);
       --gap: 8px;
-      --radius: 18px;
+      --radius: 999px;
     }
 
     * { box-sizing: border-box; }
+
     html, body {
       margin: 0;
-      padding: 0;
       min-height: 100%;
-      background:
-        radial-gradient(circle at top, #1b2140 0%, #0f1220 55%, #0b0d16 100%);
       color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      background:
+        radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--bg2) 70%, white 0%), transparent 35%),
+        radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--bg1) 72%, white 0%), transparent 35%),
+        linear-gradient(180deg, var(--bg2), var(--bg1) 55%, var(--bg3));
     }
 
     .wrap {
@@ -39,39 +43,43 @@
     }
 
     .game {
-      width: min(96vw, 720px);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      width: min(96vw, 760px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      border: 1px solid var(--panel-border);
+      border-radius: 26px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.38);
       overflow: hidden;
+      backdrop-filter: blur(8px);
     }
 
     .topbar {
       padding: 16px 16px 12px;
       display: flex;
-      gap: 12px;
       align-items: center;
       justify-content: space-between;
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      gap: 12px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      flex-wrap: wrap;
     }
 
     .title {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
+      min-width: 260px;
     }
 
     .title h1 {
       margin: 0;
       font-size: 18px;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
 
     .title .sub {
       color: var(--muted);
       font-size: 13px;
+      line-height: 1.35;
     }
 
     .stats {
@@ -79,16 +87,16 @@
       gap: 10px;
       flex-wrap: wrap;
       justify-content: flex-end;
+      margin-left: auto;
     }
 
     .chip {
-      min-width: 110px;
+      min-width: 108px;
+      padding: 10px 12px;
+      border-radius: 16px;
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 14px;
-      padding: 10px 12px;
       text-align: center;
-      backdrop-filter: blur(6px);
     }
 
     .chip .label {
@@ -101,43 +109,61 @@
     .chip .value {
       font-size: 20px;
       font-weight: 800;
-      letter-spacing: 0.4px;
+      line-height: 1;
     }
 
-    .actions {
+    .controls {
       padding: 0 16px 16px;
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
+      gap: 10px;
       align-items: center;
       justify-content: space-between;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     button {
       appearance: none;
       border: 0;
-      background: linear-gradient(180deg, #7cf0c8, #4bd1aa);
-      color: #062116;
-      font-weight: 800;
-      padding: 12px 16px;
       border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 10px 24px rgba(75, 209, 170, 0.24);
-      transition: transform .08s ease, filter .2s ease;
+      transition: transform 0.08s ease, filter 0.18s ease, opacity 0.18s ease;
     }
+
     button:active { transform: translateY(1px) scale(0.99); }
+
+    button.primary {
+      background: linear-gradient(180deg, #7cf0c8, #4ed4ae);
+      color: #052116;
+      box-shadow: 0 10px 22px rgba(78, 212, 174, 0.25);
+    }
+
     button.secondary {
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.09);
       color: var(--text);
-      box-shadow: none;
       border: 1px solid rgba(255,255,255,0.10);
     }
 
+    button:hover { filter: brightness(1.06); }
+
     .message {
+      padding: 0 16px 16px;
+      min-height: 24px;
       color: var(--muted);
       font-size: 14px;
-      padding: 0 16px 16px;
-      min-height: 22px;
+      line-height: 1.35;
+    }
+
+    .message.over {
+      color: #ffd0d8;
+      font-weight: 700;
     }
 
     .board-wrap {
@@ -150,36 +176,47 @@
       gap: var(--gap);
       justify-content: center;
       padding: 16px;
+      border-radius: 24px;
       background:
-        radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 40%),
-        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        radial-gradient(circle at top left, rgba(255,255,255,0.10), transparent 42%),
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 22px;
+      overflow: visible;
     }
 
     .cell {
       width: var(--cell);
       height: var(--cell);
       position: relative;
-      border-radius: var(--radius);
-      background: rgba(255,255,255,0.04);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.035);
       border: 1px solid rgba(255,255,255,0.06);
-      overflow: hidden;
-      cursor: pointer;
+      overflow: visible;
       padding: 0;
+      cursor: pointer;
       outline: none;
+    }
+
+    .cell.selected {
+      box-shadow: 0 0 0 2px rgba(124,240,200,0.23) inset;
+      border-color: rgba(124,240,200,0.88);
+    }
+
+    .cell.hint {
+      box-shadow: 0 0 0 2px rgba(255, 215, 128, 0.28) inset;
+      border-color: rgba(255, 215, 128, 0.9);
     }
 
     .pill {
       position: absolute;
-      inset: 4px;
-      border-radius: calc(var(--radius) - 4px);
+      inset: 7px 5px;
+      border-radius: 999px;
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.24),
-        inset 0 -8px 16px rgba(0,0,0,0.18),
-        0 6px 12px rgba(0,0,0,0.18);
-      transform: translateZ(0);
-      transition: transform .12s ease, filter .12s ease, opacity .12s ease;
+        inset 0 1px 0 rgba(255,255,255,0.30),
+        inset 0 -10px 18px rgba(0,0,0,0.20),
+        0 8px 14px rgba(0,0,0,0.18);
+      transition: transform 0.14s ease, filter 0.14s ease, opacity 0.14s ease;
+      will-change: transform;
     }
 
     .pill::before,
@@ -190,22 +227,43 @@
       bottom: 0;
       width: 50%;
     }
-    .pill::before { left: 0; border-top-left-radius: inherit; border-bottom-left-radius: inherit; }
-    .pill::after { right: 0; border-top-right-radius: inherit; border-bottom-right-radius: inherit; }
 
-    .cell.selected {
-      border-color: rgba(124,240,200,0.9);
-      box-shadow: 0 0 0 2px rgba(124,240,200,0.25) inset;
+    .pill::before {
+      left: 0;
+      border-top-left-radius: inherit;
+      border-bottom-left-radius: inherit;
+    }
+
+    .pill::after {
+      right: 0;
+      border-top-right-radius: inherit;
+      border-bottom-right-radius: inherit;
+    }
+
+    .parity-0 .pill {
+      transform: translate(-5%, -5%) scale(0.96);
+    }
+
+    .parity-1 .pill {
+      transform: translate(13%, 13%) scale(0.96);
     }
 
     .cell.selected .pill {
-      transform: scale(0.96);
-      filter: brightness(1.08);
+      filter: brightness(1.08) saturate(1.05);
+      transform: scale(1);
     }
 
-    .cell.swapping .pill { transform: scale(1.08); }
-    .cell.matched {
-      animation: pop .18s ease-in forwards;
+    .cell.hint .pill {
+      animation: pulse 0.7s ease-in-out infinite alternate;
+    }
+
+    .matched .pill {
+      animation: pop 0.18s ease forwards;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(0.96); }
+      to { transform: scale(1.02); }
     }
 
     @keyframes pop {
@@ -213,17 +271,12 @@
       to { transform: scale(0.4); opacity: 0; }
     }
 
-    .game-over {
-      color: #ffd1d7;
-      font-weight: 700;
-    }
-
-    @media (max-width: 520px) {
-      :root { --gap: 6px; --radius: 16px; }
-      .topbar { align-items: flex-start; flex-direction: column; }
-      .stats { width: 100%; justify-content: flex-start; }
+    @media (max-width: 540px) {
+      :root { --gap: 6px; --cell: min(11vw, 56px); }
+      .topbar { align-items: flex-start; }
+      .stats { width: 100%; justify-content: flex-start; margin-left: 0; }
       .chip { min-width: 92px; }
-      .title h1 { font-size: 17px; }
+      .title { min-width: 100%; }
     }
   </style>
 </head>
@@ -232,24 +285,28 @@
     <div class="game">
       <div class="topbar">
         <div class="title">
-          <h1>Три в ряд — Pill Match</h1>
-          <div class="sub">Меняй соседние плитки местами и собирай линии из 3 и больше.</div>
+          <h1>Half-Step Match</h1>
+          <div class="sub">Swap neighboring pills. Only the active half counts, so the board plays in a checkerboard offset.</div>
         </div>
         <div class="stats">
-          <div class="chip"><span class="label">Очки</span><span class="value" id="score">0</span></div>
-          <div class="chip"><span class="label">Ходы</span><span class="value" id="moves">0</span></div>
+          <div class="chip"><span class="label">Score</span><span class="value" id="score">0</span></div>
+          <div class="chip"><span class="label">Moves</span><span class="value" id="moves">0</span></div>
         </div>
       </div>
 
-      <div class="actions">
-        <button id="newGame">Новая игра</button>
-        <button class="secondary" id="hintBtn">Проверить ходы</button>
+      <div class="controls">
+        <div class="buttons">
+          <button class="primary" id="newGame">New Game</button>
+          <button class="secondary" id="hintBtn">Hint</button>
+          <button class="secondary" id="bgBtn">Random Background</button>
+          <button class="secondary" id="paletteBtn">Random Palette</button>
+        </div>
       </div>
 
-      <div class="message" id="message">Выбери одну плитку, потом соседнюю.</div>
+      <div class="message" id="message">Pick a pill, then tap a neighboring one.</div>
 
       <div class="board-wrap">
-        <div id="board" class="board" aria-label="Игровое поле"></div>
+        <div id="board" class="board" aria-label="Game board"></div>
       </div>
     </div>
   </div>
@@ -257,78 +314,88 @@
   <script>
     (() => {
       const SIZE = 8;
-      const COLORS = [
-        ["#ff6b6b", "#ffd166"],
-        ["#4dabf7", "#74c0fc"],
-        ["#69db7c", "#b2f2bb"],
-        ["#b197fc", "#d0bfff"],
-        ["#ff922b", "#ffd8a8"],
-        ["#f06595", "#faa2c1"]
-      ];
-
-      const boardEl = document.getElementById("board");
-      const scoreEl = document.getElementById("score");
-      const movesEl = document.getElementById("moves");
-      const messageEl = document.getElementById("message");
-      const newGameBtn = document.getElementById("newGame");
-      const hintBtn = document.getElementById("hintBtn");
+      const boardEl = document.getElementById('board');
+      const scoreEl = document.getElementById('score');
+      const movesEl = document.getElementById('moves');
+      const messageEl = document.getElementById('message');
+      const newGameBtn = document.getElementById('newGame');
+      const hintBtn = document.getElementById('hintBtn');
+      const bgBtn = document.getElementById('bgBtn');
+      const paletteBtn = document.getElementById('paletteBtn');
 
       let board = [];
+      let cells = [];
+      let selected = null;
+      let hintPair = null;
+      let busy = false;
       let score = 0;
       let moves = 0;
-      let selected = null;
-      let busy = false;
-      let cells = [];
+      let palette = createPalette();
+      let bgTone = createBackgroundTone();
 
       const rand = (n) => Math.floor(Math.random() * n);
       const key = (r, c) => `${r},${c}`;
       const inBounds = (r, c) => r >= 0 && r < SIZE && c >= 0 && c < SIZE;
-      const isAdjacent = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+      const adjacent = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+
+      function createBackgroundTone() {
+        const h = rand(360);
+        return {
+          bg1: `hsl(${h} 34% 13%)`,
+          bg2: `hsl(${(h + 18) % 360} 38% 18%)`,
+          bg3: `hsl(${(h + 42) % 360} 42% 9%)`
+        };
+      }
+
+      function applyBackgroundTone(tone) {
+        document.documentElement.style.setProperty('--bg1', tone.bg1);
+        document.documentElement.style.setProperty('--bg2', tone.bg2);
+        document.documentElement.style.setProperty('--bg3', tone.bg3);
+      }
+
+      function createPalette() {
+        const base = rand(360);
+        const items = [];
+        for (let i = 0; i < 6; i++) {
+          const h1 = (base + i * 58 + rand(24) - 12 + 360) % 360;
+          const h2 = (h1 + 26 + rand(28) - 14 + 360) % 360;
+          items.push([
+            `hsl(${h1} 88% 62%)`,
+            `hsl(${h2} 88% 72%)`
+          ]);
+        }
+        return items;
+      }
 
       function randomTile() {
-        return { type: rand(COLORS.length) };
+        let left = rand(palette.length);
+        let right = rand(palette.length);
+        while (right === left) right = rand(palette.length);
+        return { left, right };
       }
 
-      function createBoard() {
-        board = Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, randomTile));
-        score = 0;
-        moves = 0;
-        selected = null;
-        updateStats();
-        removeInitialMatches();
-        renderBoard();
-        clearAllMatches();
-        if (!hasAnyMove()) {
-          createBoard();
-        }
-        setMessage("Выбери одну плитку, потом соседнюю.");
+      function activeColor(tile, r, c) {
+        return ((r + c) % 2 === 0) ? tile.left : tile.right;
       }
 
-      function removeInitialMatches() {
-        let safety = 0;
-        while (findMatches().size && safety < 50) {
-          const matches = findMatches();
-          for (const pos of matches) {
-            const [r, c] = pos.split(",").map(Number);
-            board[r][c] = randomTile();
-          }
-          safety++;
-        }
+      function makeBoard() {
+        board = Array.from({ length: SIZE }, () =>
+          Array.from({ length: SIZE }, () => randomTile())
+        );
       }
 
       function buildCells() {
-        boardEl.innerHTML = "";
+        boardEl.innerHTML = '';
         cells = [];
         for (let r = 0; r < SIZE; r++) {
           const row = [];
           for (let c = 0; c < SIZE; c++) {
-            const cell = document.createElement("button");
-            cell.className = "cell";
-            cell.type = "button";
-            cell.dataset.r = r;
-            cell.dataset.c = c;
-            cell.setAttribute("aria-label", `Ячейка ${r + 1}, ${c + 1}`);
-            cell.addEventListener("click", onCellClick);
+            const cell = document.createElement('button');
+            cell.type = 'button';
+            cell.className = `cell parity-${(r + c) % 2}`;
+            cell.dataset.r = String(r);
+            cell.dataset.c = String(c);
+            cell.addEventListener('click', onCellClick);
             boardEl.appendChild(cell);
             row.push(cell);
           }
@@ -337,28 +404,190 @@
       }
 
       function renderBoard() {
-        if (!cells.length) buildCells();
         for (let r = 0; r < SIZE; r++) {
           for (let c = 0; c < SIZE; c++) {
             const cell = cells[r][c];
-            cell.classList.toggle("selected", selected && selected.r === r && selected.c === c);
-            cell.classList.remove("matched", "swapping");
             const tile = board[r][c];
-            cell.innerHTML = "";
-            const pill = document.createElement("div");
-            pill.className = "pill";
-            const [left, right] = COLORS[tile.type];
+            cell.classList.toggle('selected', selected && selected.r === r && selected.c === c);
+            cell.classList.toggle('hint', hintPair && ((hintPair.a.r === r && hintPair.a.c === c) || (hintPair.b.r === r && hintPair.b.c === c)));
+            cell.classList.remove('matched');
+            cell.innerHTML = '';
+
+            const pill = document.createElement('div');
+            pill.className = 'pill';
+            const left = palette[tile.left][0];
+            const right = palette[tile.right][1];
             pill.style.background = `linear-gradient(90deg, ${left} 0 50%, ${right} 50% 100%)`;
-            pill.style.border = "1px solid rgba(255,255,255,0.16)";
             cell.appendChild(pill);
           }
         }
       }
 
-      function onCellClick(e) {
+      function updateStats() {
+        scoreEl.textContent = String(score);
+        movesEl.textContent = String(moves);
+      }
+
+      function setMessage(text, over = false) {
+        messageEl.textContent = text;
+        messageEl.classList.toggle('over', over);
+      }
+
+      function swap(a, b) {
+        const tmp = board[a.r][a.c];
+        board[a.r][a.c] = board[b.r][b.c];
+        board[b.r][b.c] = tmp;
+      }
+
+      function findMatches() {
+        const matched = new Set();
+
+        for (let r = 0; r < SIZE; r++) {
+          let start = 0;
+          let runColor = activeColor(board[r][0], r, 0);
+          for (let c = 1; c <= SIZE; c++) {
+            const color = c < SIZE ? activeColor(board[r][c], r, c) : null;
+            if (color !== runColor) {
+              if (c - start >= 3) {
+                for (let x = start; x < c; x++) matched.add(key(r, x));
+              }
+              start = c;
+              runColor = color;
+            }
+          }
+        }
+
+        for (let c = 0; c < SIZE; c++) {
+          let start = 0;
+          let runColor = activeColor(board[0][c], 0, c);
+          for (let r = 1; r <= SIZE; r++) {
+            const color = r < SIZE ? activeColor(board[r][c], r, c) : null;
+            if (color !== runColor) {
+              if (r - start >= 3) {
+                for (let y = start; y < r; y++) matched.add(key(y, c));
+              }
+              start = r;
+              runColor = color;
+            }
+          }
+        }
+
+        return matched;
+      }
+
+      function clearMatches(matchSet) {
+        for (const pos of matchSet) {
+          const [r, c] = pos.split(',').map(Number);
+          board[r][c] = null;
+        }
+      }
+
+      function collapseBoard() {
+        for (let c = 0; c < SIZE; c++) {
+          const stack = [];
+          for (let r = SIZE - 1; r >= 0; r--) {
+            if (board[r][c] !== null) stack.push(board[r][c]);
+          }
+          for (let r = SIZE - 1; r >= 0; r--) {
+            board[r][c] = stack.length ? stack.shift() : randomTile();
+          }
+        }
+      }
+
+      function resolveAllMatches() {
+        let chain = 0;
+        let removed = 0;
+
+        while (true) {
+          const matches = findMatches();
+          if (!matches.size) break;
+          chain++;
+          removed += matches.size;
+          score += matches.size * 10 * chain;
+          updateStats();
+          for (const pos of matches) {
+            const [r, c] = pos.split(',').map(Number);
+            cells[r][c].classList.add('matched');
+          }
+          clearMatches(matches);
+          collapseBoard();
+          renderBoard();
+        }
+
+        return removed;
+      }
+
+      function isPlayable() {
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            const a = { r, c };
+            const tries = [
+              { r: r + 1, c },
+              { r, c: c + 1 }
+            ].filter(p => inBounds(p.r, p.c));
+
+            for (const b of tries) {
+              swap(a, b);
+              const ok = findMatches().size > 0;
+              swap(a, b);
+              if (ok) return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function clearInitialMatches() {
+        let guard = 0;
+        while (guard < 60) {
+          const matches = findMatches();
+          if (!matches.size) break;
+          clearMatches(matches);
+          collapseBoard();
+          guard++;
+        }
+      }
+
+      function locateHint() {
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            const a = { r, c };
+            const neighbors = [
+              { r: r + 1, c },
+              { r, c: c + 1 }
+            ].filter(p => inBounds(p.r, p.c));
+
+            for (const b of neighbors) {
+              swap(a, b);
+              const hits = findMatches();
+              swap(a, b);
+              if (hits.size) return { a, b };
+            }
+          }
+        }
+        return null;
+      }
+
+      function showHint() {
+        hintPair = null;
+        const move = locateHint();
+        if (!move) {
+          setMessage('No moves left.', true);
+          return;
+        }
+        hintPair = move;
+        renderBoard();
+        setMessage(`Hint: swap (${move.a.r + 1}, ${move.a.c + 1}) with (${move.b.r + 1}, ${move.b.c + 1}).`);
+        window.setTimeout(() => {
+          hintPair = null;
+          renderBoard();
+        }, 1200);
+      }
+
+      async function onCellClick(event) {
         if (busy) return;
-        const r = Number(e.currentTarget.dataset.r);
-        const c = Number(e.currentTarget.dataset.c);
+        const r = Number(event.currentTarget.dataset.r);
+        const c = Number(event.currentTarget.dataset.c);
         const pos = { r, c };
 
         if (!selected) {
@@ -373,199 +602,84 @@
           return;
         }
 
-        if (isAdjacent(selected, pos)) {
-          attemptSwap(selected, pos);
-        } else {
+        if (!adjacent(selected, pos)) {
           selected = pos;
           renderBoard();
+          return;
         }
-      }
 
-      async function attemptSwap(a, b) {
         busy = true;
-        swap(a, b);
-        moves++;
-        updateStats();
+        hintPair = null;
+        swap(selected, pos);
         renderBoard();
         await wait(120);
 
         const matches = findMatches();
         if (matches.size) {
-          setMessage("Есть совпадение. Убираю линии...");
-          await resolveMatches();
-          if (!hasAnyMove()) {
-            endGame();
+          moves += 1;
+          updateStats();
+          setMessage('Match cleared.');
+          resolveAllMatches();
+          if (!isPlayable()) {
+            setMessage('No moves left. Game over.', true);
           } else {
-            setMessage("Ход сделан. Ищи следующую линию.");
+            setMessage('Move made. Keep going.');
           }
         } else {
-          swap(a, b);
-          setMessage("Нет линии — ход не засчитан.");
+          swap(selected, pos);
           renderBoard();
-          await wait(120);
-          moves--;
-          updateStats();
+          setMessage('No match. Swap undone.');
         }
 
         selected = null;
-        renderBoard();
         busy = false;
+        renderBoard();
       }
 
-      function swap(a, b) {
-        const tmp = board[a.r][a.c];
-        board[a.r][a.c] = board[b.r][b.c];
-        board[b.r][b.c] = tmp;
-      }
+      function startGame() {
+        score = 0;
+        moves = 0;
+        selected = null;
+        hintPair = null;
+        busy = false;
+        updateStats();
+        makeBoard();
+        clearInitialMatches();
 
-      function findMatches() {
-        const matched = new Set();
-
-        // Horizontal
-        for (let r = 0; r < SIZE; r++) {
-          let runType = board[r][0].type;
-          let runStart = 0;
-          for (let c = 1; c <= SIZE; c++) {
-            const type = c < SIZE ? board[r][c].type : null;
-            if (type !== runType) {
-              const len = c - runStart;
-              if (runType !== null && len >= 3) {
-                for (let x = runStart; x < c; x++) matched.add(key(r, x));
-              }
-              runType = type;
-              runStart = c;
-            }
-          }
+        let safety = 0;
+        while (!isPlayable() && safety < 40) {
+          makeBoard();
+          clearInitialMatches();
+          safety++;
         }
 
-        // Vertical
-        for (let c = 0; c < SIZE; c++) {
-          let runType = board[0][c].type;
-          let runStart = 0;
-          for (let r = 1; r <= SIZE; r++) {
-            const type = r < SIZE ? board[r][c].type : null;
-            if (type !== runType) {
-              const len = r - runStart;
-              if (runType !== null && len >= 3) {
-                for (let y = runStart; y < r; y++) matched.add(key(y, c));
-              }
-              runType = type;
-              runStart = r;
-            }
-          }
-        }
-
-        return matched;
+        renderBoard();
+        setMessage('Pick a pill, then tap a neighboring one.');
       }
 
-      function clearMatches(matchSet) {
-        for (const pos of matchSet) {
-          const [r, c] = pos.split(",").map(Number);
-          board[r][c] = null;
-        }
+      function randomBackground() {
+        bgTone = createBackgroundTone();
+        applyBackgroundTone(bgTone);
       }
 
-      function collapseBoard() {
-        for (let c = 0; c < SIZE; c++) {
-          const stack = [];
-          for (let r = SIZE - 1; r >= 0; r--) {
-            if (board[r][c]) stack.push(board[r][c]);
-          }
-          for (let r = SIZE - 1; r >= 0; r--) {
-            board[r][c] = stack.length ? stack.shift() : randomTile();
-          }
-        }
-      }
-
-      function clearAllMatches() {
-        let guard = 0;
-        while (true && guard < 50) {
-          const matches = findMatches();
-          if (!matches.size) break;
-          clearMatches(matches);
-          collapseBoard();
-          guard++;
-        }
-      }
-
-      async function resolveMatches() {
-        let totalRemoved = 0;
-        let chain = 0;
-
-        while (true) {
-          const matches = findMatches();
-          if (!matches.size) break;
-          chain++;
-          totalRemoved += matches.size;
-          score += matches.size * 10 * chain;
-          updateStats();
-          markMatched(matches);
-          await wait(180);
-          clearMatches(matches);
-          collapseBoard();
-          renderBoard();
-          await wait(120);
-        }
-
-        if (totalRemoved) {
-          setMessage(`Удалено плиток: ${totalRemoved}.`);
-        }
-      }
-
-      function markMatched(matchSet) {
-        for (const pos of matchSet) {
-          const [r, c] = pos.split(",").map(Number);
-          cells[r][c].classList.add("matched");
-        }
-      }
-
-      function hasAnyMove() {
-        for (let r = 0; r < SIZE; r++) {
-          for (let c = 0; c < SIZE; c++) {
-            const here = { r, c };
-            const neighbors = [
-              { r: r + 1, c },
-              { r, c: c + 1 }
-            ].filter(p => inBounds(p.r, p.c));
-            for (const n of neighbors) {
-              swap(here, n);
-              const ok = findMatches().size > 0;
-              swap(here, n);
-              if (ok) return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      function updateStats() {
-        scoreEl.textContent = score;
-        movesEl.textContent = moves;
-      }
-
-      function setMessage(text, isOver = false) {
-        messageEl.textContent = text;
-        messageEl.classList.toggle("game-over", isOver);
-      }
-
-      function endGame() {
-        setMessage("Ходов больше нет. Игра окончена. Нажми «Новая игра».", true);
+      function randomizePalette() {
+        palette = createPalette();
+        renderBoard();
+        setMessage('Palette changed.');
       }
 
       function wait(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
       }
 
-      newGameBtn.addEventListener("click", () => {
-        createBoard();
-      });
+      newGameBtn.addEventListener('click', startGame);
+      hintBtn.addEventListener('click', showHint);
+      bgBtn.addEventListener('click', randomBackground);
+      paletteBtn.addEventListener('click', randomizePalette);
 
-      hintBtn.addEventListener("click", () => {
-        setMessage(hasAnyMove() ? "Ещё есть доступные ходы." : "Ходов больше нет.", !hasAnyMove());
-      });
-
+      applyBackgroundTone(bgTone);
       buildCells();
-      createBoard();
+      startGame();
     })();
   </script>
 </body>
