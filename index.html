@@ -7,17 +7,16 @@
   <style>
     :root {
       --bg1: #0d1020;
-      --bg2: #161b36;
+      --bg2: #171b35;
       --bg3: #090b14;
-      --panel: rgba(255, 255, 255, 0.06);
-      --panel-border: rgba(255, 255, 255, 0.10);
+      --panel: rgba(255,255,255,0.06);
+      --panel-border: rgba(255,255,255,0.10);
       --text: #eef3ff;
-      --muted: #a2aed0;
+      --muted: #a7b2d3;
       --good: #7cf0c8;
-      --bad: #ff7f93;
+      --warn: #ffd47a;
       --cell: min(10vw, 66px);
       --gap: 8px;
-      --radius: 999px;
     }
 
     * { box-sizing: border-box; }
@@ -30,8 +29,8 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
       background:
-        radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--bg2) 70%, white 0%), transparent 35%),
-        radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--bg1) 72%, white 0%), transparent 35%),
+        radial-gradient(circle at 18% 10%, color-mix(in srgb, var(--bg2) 74%, white 0%), transparent 34%),
+        radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--bg1) 72%, white 0%), transparent 36%),
         linear-gradient(180deg, var(--bg2), var(--bg1) 55%, var(--bg3));
     }
 
@@ -43,24 +42,24 @@
     }
 
     .game {
-      width: min(96vw, 760px);
+      width: min(96vw, 780px);
+      border-radius: 26px;
+      overflow: hidden;
       background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
       border: 1px solid var(--panel-border);
-      border-radius: 26px;
       box-shadow: 0 24px 70px rgba(0,0,0,0.38);
-      overflow: hidden;
       backdrop-filter: blur(8px);
     }
 
     .topbar {
       padding: 16px 16px 12px;
       display: flex;
+      gap: 12px;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      flex-wrap: wrap;
       border-bottom: 1px solid rgba(255,255,255,0.08);
       background: rgba(255,255,255,0.03);
-      flex-wrap: wrap;
     }
 
     .title {
@@ -77,8 +76,8 @@
     }
 
     .title .sub {
-      color: var(--muted);
       font-size: 13px;
+      color: var(--muted);
       line-height: 1.35;
     }
 
@@ -115,16 +114,16 @@
     .controls {
       padding: 0 16px 16px;
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
     }
 
     .buttons {
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     button {
@@ -134,30 +133,29 @@
       padding: 12px 16px;
       font-weight: 800;
       cursor: pointer;
-      transition: transform 0.08s ease, filter 0.18s ease, opacity 0.18s ease;
+      transition: transform 0.08s ease, filter 0.18s ease;
     }
 
     button:active { transform: translateY(1px) scale(0.99); }
+    button:hover { filter: brightness(1.06); }
 
-    button.primary {
+    .primary {
       background: linear-gradient(180deg, #7cf0c8, #4ed4ae);
       color: #052116;
-      box-shadow: 0 10px 22px rgba(78, 212, 174, 0.25);
+      box-shadow: 0 10px 22px rgba(78, 212, 174, 0.24);
     }
 
-    button.secondary {
+    .secondary {
       background: rgba(255,255,255,0.09);
       color: var(--text);
       border: 1px solid rgba(255,255,255,0.10);
     }
 
-    button:hover { filter: brightness(1.06); }
-
     .message {
       padding: 0 16px 16px;
       min-height: 24px;
-      color: var(--muted);
       font-size: 14px;
+      color: var(--muted);
       line-height: 1.35;
     }
 
@@ -191,32 +189,31 @@
       border-radius: 18px;
       background: rgba(255,255,255,0.035);
       border: 1px solid rgba(255,255,255,0.06);
-      overflow: visible;
       padding: 0;
       cursor: pointer;
       outline: none;
+      overflow: hidden;
     }
 
     .cell.selected {
-      box-shadow: 0 0 0 2px rgba(124,240,200,0.23) inset;
+      box-shadow: 0 0 0 2px rgba(124,240,200,0.24) inset;
       border-color: rgba(124,240,200,0.88);
     }
 
     .cell.hint {
-      box-shadow: 0 0 0 2px rgba(255, 215, 128, 0.28) inset;
-      border-color: rgba(255, 215, 128, 0.9);
+      box-shadow: 0 0 0 2px rgba(255,212,122,0.24) inset;
+      border-color: rgba(255,212,122,0.94);
     }
 
     .pill {
       position: absolute;
       inset: 7px 5px;
       border-radius: 999px;
+      overflow: hidden;
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.30),
-        inset 0 -10px 18px rgba(0,0,0,0.20),
+        inset 0 -10px 18px rgba(0,0,0,0.18),
         0 8px 14px rgba(0,0,0,0.18);
-      transition: transform 0.14s ease, filter 0.14s ease, opacity 0.14s ease;
-      will-change: transform;
     }
 
     .pill::before,
@@ -226,6 +223,7 @@
       top: 0;
       bottom: 0;
       width: 50%;
+      box-sizing: border-box;
     }
 
     .pill::before {
@@ -240,30 +238,50 @@
       border-bottom-right-radius: inherit;
     }
 
-    .parity-0 .pill {
-      transform: translate(-5%, -5%) scale(0.96);
+    .half {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 50%;
+      overflow: hidden;
     }
 
-    .parity-1 .pill {
-      transform: translate(13%, 13%) scale(0.96);
+    .half.left { left: 0; }
+    .half.right { right: 0; }
+
+    .half .fill,
+    .half .ghost {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
     }
 
-    .cell.selected .pill {
-      filter: brightness(1.08) saturate(1.05);
-      transform: scale(1);
+    .half.left .fill,
+    .half.left .ghost {
+      border-top-right-radius: 14px;
+      border-bottom-right-radius: 14px;
     }
 
-    .cell.hint .pill {
-      animation: pulse 0.7s ease-in-out infinite alternate;
+    .half.right .fill,
+    .half.right .ghost {
+      border-top-left-radius: 14px;
+      border-bottom-left-radius: 14px;
     }
 
-    .matched .pill {
+    .fill {
+      opacity: 1;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), inset 0 -8px 12px rgba(0,0,0,0.12);
+    }
+
+    .ghost {
+      background: transparent;
+      border: 2px dashed rgba(255,255,255,0.24);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+      opacity: 1;
+    }
+
+    .matched {
       animation: pop 0.18s ease forwards;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(0.96); }
-      to { transform: scale(1.02); }
     }
 
     @keyframes pop {
@@ -273,10 +291,9 @@
 
     @media (max-width: 540px) {
       :root { --gap: 6px; --cell: min(11vw, 56px); }
-      .topbar { align-items: flex-start; }
+      .title { min-width: 100%; }
       .stats { width: 100%; justify-content: flex-start; margin-left: 0; }
       .chip { min-width: 92px; }
-      .title { min-width: 100%; }
     }
   </style>
 </head>
@@ -286,7 +303,7 @@
       <div class="topbar">
         <div class="title">
           <h1>Half-Step Match</h1>
-          <div class="sub">Swap neighboring pills. Only the active half counts, so the board plays in a checkerboard offset.</div>
+          <div class="sub">Each cell has two independent halves. Match either side horizontally or vertically, clear only that half, and let the rest fall.</div>
         </div>
         <div class="stats">
           <div class="chip"><span class="label">Score</span><span class="value" id="score">0</span></div>
@@ -334,9 +351,9 @@
       let bgTone = createBackgroundTone();
 
       const rand = (n) => Math.floor(Math.random() * n);
-      const key = (r, c) => `${r},${c}`;
       const inBounds = (r, c) => r >= 0 && r < SIZE && c >= 0 && c < SIZE;
-      const adjacent = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+      const id = (r, c, side) => `${r},${c},${side}`;
+      const sides = ['left', 'right'];
 
       function createBackgroundTone() {
         const h = rand(360);
@@ -356,11 +373,11 @@
       function createPalette() {
         const base = rand(360);
         const items = [];
-        for (let i = 0; i < 6; i++) {
-          const h1 = (base + i * 58 + rand(24) - 12 + 360) % 360;
-          const h2 = (h1 + 26 + rand(28) - 14 + 360) % 360;
+        for (let i = 0; i < 7; i++) {
+          const h1 = (base + i * 52 + rand(24) - 12 + 360) % 360;
+          const h2 = (h1 + 24 + rand(34) - 17 + 360) % 360;
           items.push([
-            `hsl(${h1} 88% 62%)`,
+            `hsl(${h1} 88% 60%)`,
             `hsl(${h2} 88% 72%)`
           ]);
         }
@@ -368,14 +385,10 @@
       }
 
       function randomTile() {
-        let left = rand(palette.length);
-        let right = rand(palette.length);
-        while (right === left) right = rand(palette.length);
-        return { left, right };
-      }
-
-      function activeColor(tile, r, c) {
-        return ((r + c) % 2 === 0) ? tile.left : tile.right;
+        return {
+          left: rand(palette.length),
+          right: rand(palette.length)
+        };
       }
 
       function makeBoard() {
@@ -392,7 +405,7 @@
           for (let c = 0; c < SIZE; c++) {
             const cell = document.createElement('button');
             cell.type = 'button';
-            cell.className = `cell parity-${(r + c) % 2}`;
+            cell.className = 'cell';
             cell.dataset.r = String(r);
             cell.dataset.c = String(c);
             cell.addEventListener('click', onCellClick);
@@ -403,21 +416,39 @@
         }
       }
 
+      function colorOf(tile, side) {
+        return tile[side] === null ? null : palette[tile[side]];
+      }
+
       function renderBoard() {
         for (let r = 0; r < SIZE; r++) {
           for (let c = 0; c < SIZE; c++) {
             const cell = cells[r][c];
             const tile = board[r][c];
-            cell.classList.toggle('selected', selected && selected.r === r && selected.c === c);
-            cell.classList.toggle('hint', hintPair && ((hintPair.a.r === r && hintPair.a.c === c) || (hintPair.b.r === r && hintPair.b.c === c)));
+            cell.classList.toggle('selected', !!selected && selected.r === r && selected.c === c);
+            cell.classList.toggle('hint', !!hintPair && ((hintPair.a.r === r && hintPair.a.c === c) || (hintPair.b.r === r && hintPair.b.c === c)));
             cell.classList.remove('matched');
             cell.innerHTML = '';
 
             const pill = document.createElement('div');
             pill.className = 'pill';
-            const left = palette[tile.left][0];
-            const right = palette[tile.right][1];
-            pill.style.background = `linear-gradient(90deg, ${left} 0 50%, ${right} 50% 100%)`;
+
+            const left = document.createElement('div');
+            left.className = 'half left';
+            const leftInner = document.createElement('div');
+            leftInner.className = tile.left === null ? 'ghost' : 'fill';
+            if (tile.left !== null) leftInner.style.background = `linear-gradient(90deg, ${palette[tile.left][0]} 0%, ${palette[tile.left][1]} 100%)`;
+            left.appendChild(leftInner);
+
+            const right = document.createElement('div');
+            right.className = 'half right';
+            const rightInner = document.createElement('div');
+            rightInner.className = tile.right === null ? 'ghost' : 'fill';
+            if (tile.right !== null) rightInner.style.background = `linear-gradient(90deg, ${palette[tile.right][0]} 0%, ${palette[tile.right][1]} 100%)`;
+            right.appendChild(rightInner);
+
+            pill.appendChild(left);
+            pill.appendChild(right);
             cell.appendChild(pill);
           }
         }
@@ -433,64 +464,84 @@
         messageEl.classList.toggle('over', over);
       }
 
-      function swap(a, b) {
+      function swapCells(a, b) {
         const tmp = board[a.r][a.c];
         board[a.r][a.c] = board[b.r][b.c];
         board[b.r][b.c] = tmp;
       }
 
+      function laneValue(r, c, side) {
+        return board[r][c][side];
+      }
+
       function findMatches() {
-        const matched = new Set();
+        const hits = new Set();
 
-        for (let r = 0; r < SIZE; r++) {
-          let start = 0;
-          let runColor = activeColor(board[r][0], r, 0);
-          for (let c = 1; c <= SIZE; c++) {
-            const color = c < SIZE ? activeColor(board[r][c], r, c) : null;
-            if (color !== runColor) {
-              if (c - start >= 3) {
-                for (let x = start; x < c; x++) matched.add(key(r, x));
+        for (const side of sides) {
+          for (let r = 0; r < SIZE; r++) {
+            let start = 0;
+            let run = laneValue(r, 0, side);
+            for (let c = 1; c <= SIZE; c++) {
+              const cur = c < SIZE ? laneValue(r, c, side) : null;
+              if (cur !== run) {
+                if (run !== null && c - start >= 3) {
+                  for (let x = start; x < c; x++) hits.add(id(r, x, side));
+                }
+                start = c;
+                run = cur;
               }
-              start = c;
-              runColor = color;
+            }
+          }
+
+          for (let c = 0; c < SIZE; c++) {
+            let start = 0;
+            let run = laneValue(0, c, side);
+            for (let r = 1; r <= SIZE; r++) {
+              const cur = r < SIZE ? laneValue(r, c, side) : null;
+              if (cur !== run) {
+                if (run !== null && r - start >= 3) {
+                  for (let y = start; y < r; y++) hits.add(id(y, c, side));
+                }
+                start = r;
+                run = cur;
+              }
             }
           }
         }
 
-        for (let c = 0; c < SIZE; c++) {
-          let start = 0;
-          let runColor = activeColor(board[0][c], 0, c);
-          for (let r = 1; r <= SIZE; r++) {
-            const color = r < SIZE ? activeColor(board[r][c], r, c) : null;
-            if (color !== runColor) {
-              if (r - start >= 3) {
-                for (let y = start; y < r; y++) matched.add(key(y, c));
-              }
-              start = r;
-              runColor = color;
-            }
-          }
-        }
-
-        return matched;
+        return hits;
       }
 
       function clearMatches(matchSet) {
-        for (const pos of matchSet) {
-          const [r, c] = pos.split(',').map(Number);
-          board[r][c] = null;
+        for (const key of matchSet) {
+          const [r, c, side] = key.split(',');
+          board[Number(r)][Number(c)][side] = null;
         }
       }
 
       function collapseBoard() {
-        for (let c = 0; c < SIZE; c++) {
-          const stack = [];
-          for (let r = SIZE - 1; r >= 0; r--) {
-            if (board[r][c] !== null) stack.push(board[r][c]);
+        for (const side of sides) {
+          for (let c = 0; c < SIZE; c++) {
+            const stack = [];
+            for (let r = SIZE - 1; r >= 0; r--) {
+              const val = board[r][c][side];
+              if (val !== null) stack.push(val);
+            }
+            for (let r = SIZE - 1; r >= 0; r--) {
+              board[r][c][side] = stack.length ? stack.shift() : null;
+            }
           }
-          for (let r = SIZE - 1; r >= 0; r--) {
-            board[r][c] = stack.length ? stack.shift() : randomTile();
-          }
+        }
+      }
+
+      function clearInitialMatches() {
+        let guard = 0;
+        while (guard < 80) {
+          const matches = findMatches();
+          if (!matches.size) break;
+          clearMatches(matches);
+          collapseBoard();
+          guard++;
         }
       }
 
@@ -505,10 +556,7 @@
           removed += matches.size;
           score += matches.size * 10 * chain;
           updateStats();
-          for (const pos of matches) {
-            const [r, c] = pos.split(',').map(Number);
-            cells[r][c].classList.add('matched');
-          }
+          markMatched(matches);
           clearMatches(matches);
           collapseBoard();
           renderBoard();
@@ -517,35 +565,31 @@
         return removed;
       }
 
+      function markMatched(matchSet) {
+        for (const key of matchSet) {
+          const [r, c] = key.split(',').map(Number);
+          cells[r][c].classList.add('matched');
+        }
+      }
+
       function isPlayable() {
         for (let r = 0; r < SIZE; r++) {
           for (let c = 0; c < SIZE; c++) {
             const a = { r, c };
-            const tries = [
+            const neighbors = [
               { r: r + 1, c },
               { r, c: c + 1 }
             ].filter(p => inBounds(p.r, p.c));
 
-            for (const b of tries) {
-              swap(a, b);
+            for (const b of neighbors) {
+              swapCells(a, b);
               const ok = findMatches().size > 0;
-              swap(a, b);
+              swapCells(a, b);
               if (ok) return true;
             }
           }
         }
         return false;
-      }
-
-      function clearInitialMatches() {
-        let guard = 0;
-        while (guard < 60) {
-          const matches = findMatches();
-          if (!matches.size) break;
-          clearMatches(matches);
-          collapseBoard();
-          guard++;
-        }
       }
 
       function locateHint() {
@@ -558,9 +602,9 @@
             ].filter(p => inBounds(p.r, p.c));
 
             for (const b of neighbors) {
-              swap(a, b);
+              swapCells(a, b);
               const hits = findMatches();
-              swap(a, b);
+              swapCells(a, b);
               if (hits.size) return { a, b };
             }
           }
@@ -602,7 +646,8 @@
           return;
         }
 
-        if (!adjacent(selected, pos)) {
+        const isNeighbor = Math.abs(selected.r - r) + Math.abs(selected.c - c) === 1;
+        if (!isNeighbor) {
           selected = pos;
           renderBoard();
           return;
@@ -610,9 +655,9 @@
 
         busy = true;
         hintPair = null;
-        swap(selected, pos);
+        swapCells(selected, pos);
         renderBoard();
-        await wait(120);
+        await wait(110);
 
         const matches = findMatches();
         if (matches.size) {
@@ -626,7 +671,7 @@
             setMessage('Move made. Keep going.');
           }
         } else {
-          swap(selected, pos);
+          swapCells(selected, pos);
           renderBoard();
           setMessage('No match. Swap undone.');
         }
@@ -634,6 +679,17 @@
         selected = null;
         busy = false;
         renderBoard();
+      }
+
+      function randomBackground() {
+        bgTone = createBackgroundTone();
+        applyBackgroundTone(bgTone);
+      }
+
+      function randomizePalette() {
+        palette = createPalette();
+        renderBoard();
+        setMessage('Palette changed.');
       }
 
       function startGame() {
@@ -646,26 +702,15 @@
         makeBoard();
         clearInitialMatches();
 
-        let safety = 0;
-        while (!isPlayable() && safety < 40) {
+        let guard = 0;
+        while (!isPlayable() && guard < 50) {
           makeBoard();
           clearInitialMatches();
-          safety++;
+          guard++;
         }
 
         renderBoard();
         setMessage('Pick a pill, then tap a neighboring one.');
-      }
-
-      function randomBackground() {
-        bgTone = createBackgroundTone();
-        applyBackgroundTone(bgTone);
-      }
-
-      function randomizePalette() {
-        palette = createPalette();
-        renderBoard();
-        setMessage('Palette changed.');
       }
 
       function wait(ms) {
