@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
@@ -36,8 +36,9 @@
       padding: 10px 10px 16px;
     }
     .hud {
-      width: min(96vw, 560px);
+      width: min(96vw, 680px);
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
@@ -48,6 +49,12 @@
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+    }
+    .hud .left, .hud .right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .hud .stat {
       display: flex;
@@ -77,7 +84,7 @@
     }
     .stage {
       position: relative;
-      width: min(96vw, 560px);
+      width: min(96vw, 680px);
       flex: 1;
       display: flex;
       align-items: center;
@@ -90,14 +97,17 @@
       height: 100%;
       max-height: calc(100vh - 150px);
       border-radius: 22px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
       box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+      background: transparent;
     }
     .controls {
-      width: min(96vw, 560px);
+      width: min(96vw, 680px);
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
+    }
+    .controls.hidden {
+      display: none;
     }
     .controls button {
       border: 0;
@@ -109,21 +119,19 @@
       font-weight: 800;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
     }
-    .hint {
-      width: min(96vw, 560px);
-      text-align: center;
-      color: rgba(234,241,255,0.66);
-      font-size: 12px;
-      line-height: 1.35;
-      padding-bottom: 2px;
-    }
     .overlay {
       position: absolute;
       inset: 0;
       display: none;
       align-items: center;
       justify-content: center;
+      flex-direction: column;
+      gap: 14px;
       pointer-events: none;
+      text-align: center;
+    }
+    .overlay.show { display: flex; }
+    .overlay .title {
       font-weight: 900;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -131,35 +139,61 @@
       text-shadow: 0 6px 18px rgba(0,0,0,0.55);
       font-size: clamp(32px, 9vw, 64px);
     }
-    .overlay.show { display: flex; }
+    .overlay .sub {
+      color: rgba(234,241,255,0.82);
+      font-size: 14px;
+      max-width: 340px;
+      line-height: 1.45;
+    }
+    .overlay button {
+      pointer-events: auto;
+      border: 0;
+      border-radius: 16px;
+      padding: 12px 18px;
+      background: rgba(124,224,255,0.18);
+      color: var(--text);
+      font-weight: 800;
+      box-shadow: inset 0 0 0 1px rgba(124,224,255,0.22);
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="hud">
-      <div class="stat">
-        <div class="label">SCORE</div>
-        <div class="value" id="score">0</div>
+      <div class="left">
+        <div class="stat">
+          <div class="label">SCORE</div>
+          <div class="value" id="score">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">CHAIN</div>
+          <div class="value" id="chain">0</div>
+        </div>
       </div>
-      <div class="stat">
-        <div class="label">CHAIN</div>
-        <div class="value" id="chain">0</div>
+      <div class="right">
+        <button id="touchMode">Touch Off</button>
+        <button id="paletteMode">Random Colors</button>
+        <button id="bgMode">Change Background</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="restart">Restart</button>
       </div>
-      <button id="restart">Restart</button>
     </div>
 
-    <div class="stage">
+    <div class="stage" id="stage">
       <canvas id="game"></canvas>
-      <div class="overlay" id="overlay">GAME OVER</div>
+      <div class="overlay" id="overlay">
+        <div class="title" id="overlayTitle">Game Over</div>
+        <div class="sub" id="overlaySub">No more moves.</div>
+        <button id="overlayRestart">Restart</button>
+      </div>
     </div>
 
-    <div class="controls">
+    <div class="controls" id="controls">
       <button id="left">◀</button>
       <button id="rotate">⟳</button>
       <button id="down">▼</button>
       <button id="right">▶</button>
     </div>
-    <div class="hint">Arrow keys / touch buttons. Space = hard drop. Pills fall as 2 halves and can separate after clears.</div>
   </div>
 
   <script>
@@ -169,17 +203,32 @@
       const scoreEl = document.getElementById('score');
       const chainEl = document.getElementById('chain');
       const overlay = document.getElementById('overlay');
+      const overlayTitle = document.getElementById('overlayTitle');
+      const overlaySub = document.getElementById('overlaySub');
+      const controls = document.getElementById('controls');
+      const stage = document.getElementById('stage');
 
       const COLS = 8;
       const ROWS = 16;
-      const COLORS = [
-        '#ff5b7f',
-        '#ffcf5b',
-        '#62d46e',
-        '#5bb8ff',
-        '#b57dff',
-        '#ff8a4b'
+      const MOVE_REPEAT_GAP = 120;
+
+      const paletteSets = [
+        ['#ff5b7f', '#ffcf5b', '#62d46e', '#5bb8ff', '#b57dff', '#ff8a4b'],
+        ['#ff6b6b', '#feca57', '#1dd1a1', '#54a0ff', '#5f27cd', '#ff9f43'],
+        ['#f368e0', '#00d2d3', '#ff9f1a', '#10ac84', '#ee5253', '#54a0ff'],
+        ['#ff7675', '#81ecec', '#74b9ff', '#a29bfe', '#fdcb6e', '#55efc4']
       ];
+
+      const backgroundSets = [
+        ['#0e1320', '#121a2c'],
+        ['#1b1022', '#2e1537'],
+        ['#0a1f26', '#123447'],
+        ['#1f1b0c', '#32270e'],
+        ['#0f1f15', '#183724']
+      ];
+
+      let paletteIndex = 0;
+      let backgroundIndex = 0;
 
       let cellSize = 40;
       let boardX = 0;
@@ -193,29 +242,32 @@
       let score = 0;
       let chain = 0;
       let gameOver = false;
+      let paused = false;
+      let touchMode = false;
       let dropTimer = 0;
       let dropInterval = 560;
       let flashCells = [];
+      let lastMoveAt = 0;
+      let bgColors = backgroundSets[0];
+      let currentPalette = paletteSets[0];
+
+      const randomColor = () => currentPalette[(Math.random() * currentPalette.length) | 0];
+      const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
       function makeGrid() {
         grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
       }
 
-      function randColor() {
-        return COLORS[(Math.random() * COLORS.length) | 0];
-      }
-
       function resize() {
-        const stage = document.querySelector('.stage');
         const hud = document.querySelector('.hud');
-        const controls = document.querySelector('.controls');
-        const hint = document.querySelector('.hint');
-        const w = Math.min(stage.clientWidth, 560);
-        const maxH = window.innerHeight - hud.offsetHeight - controls.offsetHeight - hint.offsetHeight - 54;
-        const h = Math.min(maxH, window.innerHeight * 0.72);
+        const controlsH = controls.classList.contains('hidden') ? 0 : controls.offsetHeight;
+        const hintH = 0;
+        const w = Math.min(stage.clientWidth, 680);
+        const maxH = window.innerHeight - hud.offsetHeight - controlsH - hintH - 54;
+        const h = Math.min(maxH, window.innerHeight * 0.76);
         const sizeByW = Math.floor(w / COLS);
         const sizeByH = Math.floor(h / ROWS);
-        cellSize = Math.max(28, Math.min(sizeByW, sizeByH));
+        cellSize = Math.max(30, Math.min(sizeByW, sizeByH));
         boardW = cellSize * COLS;
         boardH = cellSize * ROWS;
         boardX = Math.floor((w - boardW) / 2);
@@ -228,16 +280,7 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
 
-      function cloneCells(cells) {
-        return cells.map(c => ({ x: c.x, y: c.y }));
-      }
-
-      function makeActive(x, y, rot, color) {
-        return { x, y, rot, color, cells: shapeCells(x, y, rot) };
-      }
-
       function shapeCells(x, y, rot) {
-        // A pill made from two halves. 0 = horizontal, 1 = vertical.
         if (rot % 2 === 0) return [{ x, y }, { x: x + 1, y }];
         return [{ x, y }, { x, y: y + 1 }];
       }
@@ -250,59 +293,49 @@
         return false;
       }
 
-      function syncActiveCells() {
+      function syncActive() {
         if (!active) return;
         active.cells = shapeCells(active.x, active.y, active.rot);
       }
 
-      function canMove(dx, dy, rot = active?.rot ?? 0) {
+      function canMove(dx, dy, rot = active ? active.rot : 0) {
         if (!active) return false;
-        const cells = shapeCells(active.x + dx, active.y + dy, rot);
-        return !collides(cells);
-      }
-
-      function tryKickRotate() {
-        if (!active) return;
-        const nextRot = (active.rot + 1) % 2;
-        const kicks = [0, -1, 1, -2, 2];
-        for (const k of kicks) {
-          const cells = shapeCells(active.x + k, active.y, nextRot);
-          if (!collides(cells)) {
-            active.x += k;
-            active.rot = nextRot;
-            syncActiveCells();
-            return;
-          }
-        }
+        return !collides(shapeCells(active.x + dx, active.y + dy, rot));
       }
 
       function spawn() {
-        const color = randColor();
         const rot = Math.random() < 0.5 ? 0 : 1;
-        const x = Math.floor(COLS / 2) - 1;
-        const y = 0;
-        const piece = makeActive(x, y, rot, color);
-        if (collides(piece.cells)) {
+        const colors = [randomColor(), Math.random() < 0.55 ? randomColor() : null];
+        if (!colors[1]) colors[1] = colors[0];
+        active = {
+          x: Math.floor(COLS / 2) - 1,
+          y: 0,
+          rot,
+          colors,
+          cells: []
+        };
+        syncActive();
+        if (collides(active.cells)) {
           active = null;
           gameOver = true;
+          overlayTitle.textContent = 'Game Over';
+          overlaySub.textContent = 'No more moves.';
           overlay.classList.add('show');
-          return;
         }
-        active = piece;
-        syncActiveCells();
       }
 
       function lockActive() {
         if (!active) return;
-        for (const c of active.cells) {
-          grid[c.y][c.x] = { color: active.color };
+        for (let i = 0; i < active.cells.length; i++) {
+          const c = active.cells[i];
+          grid[c.y][c.x] = { color: active.colors[i] };
         }
         active = null;
-        processBoard();
-        if (!gameOver) spawn();
+        resolveBoard();
+        if (!gameOver && !paused) spawn();
       }
 
-      function applyGravity() {
+      function gravityPass() {
         let moved = false;
         for (let y = ROWS - 2; y >= 0; y--) {
           for (let x = 0; x < COLS; x++) {
@@ -323,38 +356,26 @@
       function findMatches() {
         const matched = new Set();
 
-        // Horizontal runs.
         for (let y = 0; y < ROWS; y++) {
           let x = 0;
           while (x < COLS) {
             const cell = grid[y][x];
-            if (!cell) {
-              x++;
-              continue;
-            }
+            if (!cell) { x++; continue; }
             let end = x + 1;
             while (end < COLS && grid[y][end] && grid[y][end].color === cell.color) end++;
-            if (end - x >= 3) {
-              for (let i = x; i < end; i++) matched.add(`${i},${y}`);
-            }
+            if (end - x >= 3) for (let i = x; i < end; i++) matched.add(`${i},${y}`);
             x = end;
           }
         }
 
-        // Vertical runs.
         for (let x = 0; x < COLS; x++) {
           let y = 0;
           while (y < ROWS) {
             const cell = grid[y][x];
-            if (!cell) {
-              y++;
-              continue;
-            }
+            if (!cell) { y++; continue; }
             let end = y + 1;
             while (end < ROWS && grid[end][x] && grid[end][x].color === cell.color) end++;
-            if (end - y >= 3) {
-              for (let i = y; i < end; i++) matched.add(`${x},${i}`);
-            }
+            if (end - y >= 3) for (let i = y; i < end; i++) matched.add(`${x},${i}`);
             y = end;
           }
         }
@@ -362,7 +383,7 @@
         return matched;
       }
 
-      function processBoard() {
+      function resolveBoard() {
         chain = 0;
         flashCells = [];
         let totalCleared = 0;
@@ -377,7 +398,7 @@
             const [x, y] = key.split(',').map(Number);
             grid[y][x] = null;
           }
-          applyGravity();
+          gravityPass();
         }
 
         if (totalCleared > 0) {
@@ -389,33 +410,50 @@
           chainEl.textContent = '0';
         }
 
-        // Tiny speed-up over time.
-        dropInterval = Math.max(220, 560 - Math.floor(score / 180) * 25);
+        dropInterval = clamp(560 - Math.floor(score / 180) * 25, 220, 560);
       }
 
       function stepDown() {
-        if (!active) return;
+        if (!active || paused || gameOver) return;
         if (canMove(0, 1)) {
           active.y += 1;
-          syncActiveCells();
+          syncActive();
         } else {
           lockActive();
         }
       }
 
       function move(dx) {
-        if (!active) return;
+        if (!active || paused || gameOver) return;
+        const now = performance.now();
+        if (now - lastMoveAt < MOVE_REPEAT_GAP) return;
         if (canMove(dx, 0)) {
           active.x += dx;
-          syncActiveCells();
+          syncActive();
+          lastMoveAt = now;
         }
       }
 
       function hardDrop() {
-        if (!active) return;
+        if (!active || paused || gameOver) return;
         while (canMove(0, 1)) active.y += 1;
-        syncActiveCells();
+        syncActive();
         lockActive();
+      }
+
+      function rotatePiece() {
+        if (!active || paused || gameOver) return;
+        const nextRot = (active.rot + 1) % 2;
+        const kicks = [0, -1, 1, -2, 2];
+        for (const k of kicks) {
+          const cells = shapeCells(active.x + k, active.y, nextRot);
+          if (!collides(cells)) {
+            active.x += k;
+            active.rot = nextRot;
+            syncActive();
+            return;
+          }
+        }
       }
 
       function restart() {
@@ -423,31 +461,42 @@
         score = 0;
         chain = 0;
         gameOver = false;
+        paused = false;
         dropTimer = 0;
         dropInterval = 560;
         flashCells = [];
         overlay.classList.remove('show');
         scoreEl.textContent = '0';
         chainEl.textContent = '0';
+        document.getElementById('pauseBtn').textContent = 'Pause';
         spawn();
       }
 
-      function drawBackground() {
-        const w = canvas.clientWidth;
-        const h = canvas.clientHeight;
-        const g = ctx.createLinearGradient(0, 0, 0, h);
-        g.addColorStop(0, 'rgba(255,255,255,0.05)');
-        g.addColorStop(1, 'rgba(255,255,255,0.015)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, h);
+      function setRandomPalette() {
+        paletteIndex = (paletteIndex + 1) % paletteSets.length;
+        currentPalette = paletteSets[paletteIndex];
+      }
 
-        // board area glow
-        ctx.save();
-        ctx.translate(boardX, boardY);
-        ctx.fillStyle = 'rgba(255,255,255,0.03)';
-        roundRect(ctx, -8, -8, boardW + 16, boardH + 16, 24);
-        ctx.fill();
-        ctx.restore();
+      function setRandomBackground() {
+        backgroundIndex = (backgroundIndex + 1) % backgroundSets.length;
+        bgColors = backgroundSets[backgroundIndex];
+      }
+
+      function togglePause() {
+        if (gameOver) return;
+        paused = !paused;
+        document.getElementById('pauseBtn').textContent = paused ? 'Resume' : 'Pause';
+        overlayTitle.textContent = paused ? 'Paused' : 'Game Over';
+        overlaySub.textContent = paused ? 'Tap resume to continue.' : 'No more moves.';
+        if (paused) overlay.classList.add('show');
+        else overlay.classList.remove('show');
+      }
+
+      function toggleTouchMode() {
+        touchMode = !touchMode;
+        controls.classList.toggle('hidden', touchMode);
+        document.getElementById('touchMode').textContent = touchMode ? 'Touch On' : 'Touch Off';
+        resize();
       }
 
       function roundRect(c, x, y, w, h, r) {
@@ -461,6 +510,18 @@
         c.closePath();
       }
 
+      function shade(hex, amount) {
+        const n = hex.replace('#', '');
+        const num = parseInt(n.length === 3 ? n.split('').map(ch => ch + ch).join('') : n, 16);
+        let r = (num >> 16) & 255;
+        let g = (num >> 8) & 255;
+        let b = num & 255;
+        r = Math.max(0, Math.min(255, r + amount));
+        g = Math.max(0, Math.min(255, g + amount));
+        b = Math.max(0, Math.min(255, b + amount));
+        return `rgb(${r},${g},${b})`;
+      }
+
       function drawCell(x, y, color, alpha = 1) {
         const px = boardX + x * cellSize;
         const py = boardY + y * cellSize;
@@ -472,7 +533,6 @@
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        // Main fill.
         const grad = ctx.createLinearGradient(px, py, px + w, py + h);
         grad.addColorStop(0, color);
         grad.addColorStop(1, shade(color, -18));
@@ -480,20 +540,17 @@
         roundRect(ctx, px + pad, py + pad, w, h, radius);
         ctx.fill();
 
-        // Gloss highlight.
         ctx.globalAlpha = alpha * 0.30;
         ctx.fillStyle = '#ffffff';
         roundRect(ctx, px + pad + 4, py + pad + 4, Math.max(8, w * 0.42), Math.max(8, h * 0.24), radius * 0.5);
         ctx.fill();
 
-        // Outer contour.
         ctx.globalAlpha = alpha * 0.85;
         ctx.lineWidth = 2;
         ctx.strokeStyle = 'rgba(255,255,255,0.42)';
         roundRect(ctx, px + pad, py + pad, w, h, radius);
         ctx.stroke();
 
-        // Remove internal seams if same color touches this cell.
         const sameLeft = x > 0 && grid[y][x - 1] && grid[y][x - 1].color === color;
         const sameRight = x < COLS - 1 && grid[y][x + 1] && grid[y][x + 1].color === color;
         const sameUp = y > 0 && grid[y - 1][x] && grid[y - 1][x].color === color;
@@ -527,7 +584,6 @@
           ctx.stroke();
         }
 
-        // If a side is empty, keep a stronger contour so the half looks "open".
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = 'rgba(255,255,255,0.20)';
         if (!sameLeft) {
@@ -558,16 +614,24 @@
         ctx.restore();
       }
 
-      function shade(hex, amount) {
-        const n = hex.replace('#', '');
-        const num = parseInt(n.length === 3 ? n.split('').map(ch => ch + ch).join('') : n, 16);
-        let r = (num >> 16) & 255;
-        let g = (num >> 8) & 255;
-        let b = num & 255;
-        r = Math.max(0, Math.min(255, r + amount));
-        g = Math.max(0, Math.min(255, g + amount));
-        b = Math.max(0, Math.min(255, b + amount));
-        return `rgb(${r},${g},${b})`;
+      function drawBackground() {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        const g = ctx.createLinearGradient(0, 0, 0, h);
+        g.addColorStop(0, bgColors[0]);
+        g.addColorStop(1, bgColors[1]);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.save();
+        ctx.translate(boardX, boardY);
+        const panel = ctx.createLinearGradient(0, 0, 0, boardH);
+        panel.addColorStop(0, 'rgba(255,255,255,0.06)');
+        panel.addColorStop(1, 'rgba(255,255,255,0.02)');
+        ctx.fillStyle = panel;
+        roundRect(ctx, -8, -8, boardW + 16, boardH + 16, 24);
+        ctx.fill();
+        ctx.restore();
       }
 
       function drawGridLines() {
@@ -597,7 +661,6 @@
         drawBackground();
         drawGridLines();
 
-        // Locked blocks.
         for (let y = 0; y < ROWS; y++) {
           for (let x = 0; x < COLS; x++) {
             const cell = grid[y][x];
@@ -605,7 +668,6 @@
           }
         }
 
-        // Flash clearing cells.
         for (const [x, y] of flashCells) {
           const px = boardX + x * cellSize;
           const py = boardY + y * cellSize;
@@ -617,12 +679,13 @@
           ctx.restore();
         }
 
-        // Active pill.
         if (active) {
-          for (const c of active.cells) drawCell(c.x, c.y, active.color, 0.96);
+          for (let i = 0; i < active.cells.length; i++) {
+            const c = active.cells[i];
+            drawCell(c.x, c.y, active.colors[i], 0.96);
+          }
         }
 
-        // Top soft vignette.
         const vg = ctx.createLinearGradient(0, 0, 0, h);
         vg.addColorStop(0, 'rgba(0,0,0,0.20)');
         vg.addColorStop(0.14, 'rgba(0,0,0,0)');
@@ -633,7 +696,7 @@
       }
 
       function update(dt) {
-        if (!gameOver && active) {
+        if (!paused && !gameOver && active) {
           dropTimer += dt;
           if (dropTimer >= dropInterval) {
             dropTimer = 0;
@@ -651,26 +714,87 @@
         update(dt);
       }
 
-      // Input
       window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); }
         else if (e.key === 'ArrowRight') { e.preventDefault(); move(1); }
         else if (e.key === 'ArrowDown') { e.preventDefault(); stepDown(); dropTimer = 0; }
-        else if (e.key === 'ArrowUp' || e.key === 'z') { e.preventDefault(); tryKickRotate(); }
+        else if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'z') { e.preventDefault(); rotatePiece(); }
         else if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); hardDrop(); }
-        else if (e.key.toLowerCase() === 'r') { restart(); }
+        else if (e.key.toLowerCase() === 'p') { e.preventDefault(); togglePause(); }
+        else if (e.key.toLowerCase() === 'r') { e.preventDefault(); restart(); }
       }, { passive: false });
 
       const bindTap = (id, fn) => {
         const el = document.getElementById(id);
-        const run = (e) => { e.preventDefault(); fn(); };
-        el.addEventListener('pointerdown', run);
+        el.addEventListener('pointerdown', (e) => { e.preventDefault(); fn(); });
       };
+
       bindTap('left', () => move(-1));
       bindTap('right', () => move(1));
       bindTap('down', () => { stepDown(); dropTimer = 0; });
-      bindTap('rotate', () => tryKickRotate());
-      document.getElementById('restart').addEventListener('pointerdown', (e) => { e.preventDefault(); restart(); });
+      bindTap('rotate', () => rotatePiece());
+      bindTap('restart', () => restart());
+      bindTap('overlayRestart', () => restart());
+      bindTap('pauseBtn', () => togglePause());
+      bindTap('paletteMode', () => setRandomPalette());
+      bindTap('bgMode', () => setRandomBackground());
+      bindTap('touchMode', () => toggleTouchMode());
+
+      const gesture = {
+        active: false,
+        startX: 0,
+        startY: 0,
+        lastX: 0,
+        lastY: 0,
+        decided: false
+      };
+
+      stage.addEventListener('pointerdown', (e) => {
+        if (!touchMode) return;
+        gesture.active = true;
+        gesture.startX = e.clientX;
+        gesture.startY = e.clientY;
+        gesture.lastX = e.clientX;
+        gesture.lastY = e.clientY;
+        gesture.decided = false;
+        stage.setPointerCapture(e.pointerId);
+      });
+
+      stage.addEventListener('pointermove', (e) => {
+        if (!touchMode || !gesture.active) return;
+        gesture.lastX = e.clientX;
+        gesture.lastY = e.clientY;
+        const dx = gesture.lastX - gesture.startX;
+        const dy = gesture.lastY - gesture.startY;
+        const ax = Math.abs(dx);
+        const ay = Math.abs(dy);
+
+        if (!gesture.decided) {
+          const threshold = 34;
+          if (ax < threshold && ay < threshold) return;
+          gesture.decided = true;
+          if (ay > ax * 1.2 && dy < -threshold) {
+            rotatePiece();
+          } else if (ay > ax * 1.2 && dy > threshold) {
+            stepDown();
+            dropTimer = 0;
+          } else if (ax > ay * 1.1) {
+            if (dx > threshold) move(1);
+            else if (dx < -threshold) move(-1);
+          }
+        }
+      });
+
+      stage.addEventListener('pointerup', (e) => {
+        if (!touchMode) return;
+        if (!gesture.active) return;
+        gesture.active = false;
+        try { stage.releasePointerCapture(e.pointerId); } catch {}
+      });
+
+      stage.addEventListener('pointercancel', () => {
+        gesture.active = false;
+      });
 
       window.addEventListener('resize', resize);
       makeGrid();
